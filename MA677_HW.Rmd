@@ -1,0 +1,212 @@
+---
+title: "MA677 Homework"
+author: "Xiaofan Xia"
+date: "4/12/2020"
+output: pdf_document
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Exercise 8.1
+
+```{r echo=FALSE, message=FALSE}
+#install.packages("rjags")
+#install.packages("runjags")
+require(rjags)
+source("Jags-Ydich-XnomSsubj-MbernBeta.R")
+
+#3 subjects
+myData <- read.csv("file.csv")
+y = myData$y
+s = as.numeric(myData$s)
+total = length(y)
+subj = length(unique(s))
+dataList = list(y=y,s=s,total = total , subj = subj)
+
+modelString = "
+model {
+  for ( i in 1:Ntotal ) {
+    y[i] ~ dbern( theta )
+  }
+  theta ~ dbeta( 2 , 2 )
+}
+" 
+writeLines( modelString , con="TEMPmodel.txt" )
+
+# Generate the MCMC chain:
+mcmcCoda = genMCMC(data=myData , numSavedSteps=10000)
+# Display diagnostics of chain, for specified parameter:
+diagMCMC( mcmcCoda , parName="theta[1]" )
+# Display numerical summary statistics of chain:
+smryMCMC( mcmcCoda , compVal=NULL , compValDiff=0.0 )
+# Display graphical posterior information:
+plotMCMC( mcmcCoda , data=myData , compVal=NULL , compValDiff=0.0 )
+
+#2 subjects
+mydata <- read.csv("file1.csv")
+y = mydata$y
+s = as.numeric(mydata$s)
+total = length(y)
+subj = length(unique(s))
+dataList = list(y=y,s=s,total = total, subj = subj)
+
+modelString = "
+model {
+  for ( i in 1:Ntotal ) {
+    y[i] ~ dbern( theta )
+  }
+  theta ~ dbeta( 2 , 2 )
+}
+"
+writeLines(modelString , con="TEMPmodel.txt")
+
+# Generate the MCMC chain:
+mcmcCoda = genMCMC(data=mydata, numSavedSteps=10000)
+# Display diagnostics of chain, for specified parameter:
+diagMCMC( mcmcCoda , parName="theta[1]" )
+# Display numerical summary statistics of chain:
+smryMCMC( mcmcCoda , compVal=NULL , compValDiff=0.0 )
+# Display graphical posterior information:
+plotMCMC( mcmcCoda , data=myData , compVal=NULL , compValDiff=0.0 )
+
+```
+
+2 subjects with 4 plots usually has wider HDI than 3 subjects with 9 plots in theta[1], theta[1]-thera[2] and theta[2].
+
+## Exercise 8.2
+
+```{r echo=FALSE, message=FALSE}
+df <- read.csv("Jags-Ydich-XnomSsubj-MbernBeta-Example.R")
+y = df$y
+s = as.numeric(df$s)
+total = length(y)
+subj = length(unique(s))
+dataList = list(y=y,s=s,total = total, subj = subj)
+
+modelString = "
+model {
+  for ( i in 1:Ntotal ) {
+    y[i] ~ dbern( theta )
+  }
+  theta ~ dbeta( 2 , 2 )
+}
+"
+writeLines(modelString , con="TEMPmodel.txt")
+
+# Generate the MCMC chain:
+summaryInfo = smryMCMC( mcmcCoda , compVal=0.5 , rope=c(0.45,0.55) ,
+                        compValDiff=0.0 , ropeDiff = c(-0.05,0.05) )
+```
+
+Due to the randomness in the MCMC chain, most results are not significant. 
+
+## Exercise 8.3
+
+```{r echo=FALSE, message=FALSE} 
+fileNameRoot = "Jags-Ydich-XnomSsubj-MbernBeta-"
+graphFileType = "eps"
+# Generate the MCMC chain:
+mcmcCoda = genMCMC( data=myData , numSavedSteps=50000 , saveName=fileNameRoot )
+# Display diagnostics of chain, for specified parameters:
+parameterNames = varnames(mcmcCoda) # get all parameter names
+for ( parName in parameterNames ) {
+  diagMCMC( codaObject=mcmcCoda , parName=parName ,
+                saveName=fileNameRoot , saveType=graphFileType )
+}
+# Get summary statistics of chain:
+summaryInfo = smryMCMC( mcmcCoda , compVal=0.5 , rope=c(0.45,0.55) ,
+                        compValDiff=0.0 , ropeDiff = c(-0.05,0.05) ,
+                        saveName=fileNameRoot )
+# Display posterior information:
+plotMCMC( mcmcCoda , data=myData , compVal=NULL , #rope=c(0.45,0.55) ,
+          compValDiff=0.0 , #ropeDiff = c(-0.05,0.05) ,
+          saveName=fileNameRoot , saveType=graphFileType )
+
+```
+
+
+## Exercise 8.4
+
+(A)
+
+```{r echo=FALSE, message=FALSE}
+# Optional generic preliminaries:
+graphics.off() # This closes all of R's graphics windows.
+rm(list=ls())  # Careful! This clears all of R's memory!
+myData = read.csv("file1.csv")
+source("Jags-Ydich-XnomSsubj-MbernBeta.R")
+fileNameRoot = "Jags-Ydich-XnomSsubj-MbernBeta-"
+graphFileType = "eps"
+mcmcCoda = genMCMC( data=myData , numSavedSteps=50000 , saveName=fileNameRoot )
+parameterNames = varnames(mcmcCoda) # get all parameter names
+for ( parName in parameterNames ) {
+  diagMCMC( codaObject=mcmcCoda , parName=parName ,
+            saveName=fileNameRoot , saveType=graphFileType )
+}
+# Get summary statistics of chain:
+summaryInfo = smryMCMC( mcmcCoda , compVal=NULL , #rope=c(0.45,0.55) ,
+                        compValDiff=0.0 , #ropeDiff = c(-0.05,0.05) ,
+                        saveName=fileNameRoot )
+# Display posterior information:
+plotMCMC( mcmcCoda , data=myData , compVal=NULL , #rope=c(0.45,0.55) ,
+          compValDiff=0.0 , #ropeDiff = c(-0.05,0.05) ,
+          saveName=fileNameRoot , saveType=graphFileType )
+```
+       
+
+(B)
+
+```{r echo=FALSE, message=FALSE}
+# Optional generic preliminaries:
+graphics.off() # This closes all of R's graphics windows.
+rm(list=ls())  # Careful! This clears all of R's memory!
+myData = read.csv("file1.csv")
+source("Jags-Ydich-XnomSsubj-MbernBeta.R")
+fileNameRoot = "Jags-Ydich-XnomSsubj-MbernBeta-"
+graphFileType = "eps"
+mcmcCoda = genMCMC( data=myData , numSavedSteps=50000 , saveName=fileNameRoot )
+parameterNames = varnames(mcmcCoda) # get all parameter names
+for ( parName in parameterNames ) {
+  diagMCMC( codaObject=mcmcCoda , parName=parName ,
+            saveName=fileNameRoot , saveType=graphFileType )
+}
+# Get summary statistics of chain:
+summaryInfo = smryMCMC( mcmcCoda , compVal=NULL , #rope=c(0.45,0.55) ,
+                        compValDiff=0.0 , #ropeDiff = c(-0.05,0.05) ,
+                        saveName=fileNameRoot )
+# Display posterior information:
+plotMCMC( mcmcCoda , data=myData , compVal=NULL , #rope=c(0.45,0.55) ,
+          compValDiff=0.0 , #ropeDiff = c(-0.05,0.05) ,
+          saveName=fileNameRoot , saveType=graphFileType )
+```
+
+
+(C)
+
+```{r echo=FALSE, message=FALSE}
+# Optional generic preliminaries:
+graphics.off() # This closes all of R's graphics windows.
+rm(list=ls())  # Careful! This clears all of R's memory!
+myData = read.csv("file1.csv")
+source("Jags-Ydich-XnomSsubj-MbernBeta.R")
+fileNameRoot = "Jags-Ydich-XnomSsubj-MbernBeta-"
+graphFileType = "eps"
+mcmcCoda = genMCMC( data=myData , numSavedSteps=50000 , saveName=fileNameRoot )
+parameterNames = varnames(mcmcCoda) # get all parameter names
+for ( parName in parameterNames ) {
+  diagMCMC( codaObject=mcmcCoda , parName=parName ,
+            saveName=fileNameRoot , saveType=graphFileType )
+}
+# Get summary statistics of chain:
+summaryInfo = smryMCMC( mcmcCoda , compVal=NULL , #rope=c(0.45,0.55) ,
+                        compValDiff=0.0 , #ropeDiff = c(-0.05,0.05) ,
+                        saveName=fileNameRoot )
+# Display posterior information:
+plotMCMC( mcmcCoda , data=myData , compVal=NULL , #rope=c(0.45,0.55) ,
+          compValDiff=0.0 , #ropeDiff = c(-0.05,0.05) ,
+          saveName=fileNameRoot , saveType=graphFileType )
+```
+
